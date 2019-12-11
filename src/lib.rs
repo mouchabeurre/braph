@@ -1,24 +1,50 @@
+use std::f64;
 use std::io::{self, Write};
 use std::io::prelude::*;
 
-type MaxLen = u32;
-
-pub fn parse(args: &[String]) -> Vec<MaxLen> {
+pub fn parse(args: &[String]) -> Vec<f64> {
   if args.len() > 1 {
-    let inputs: Vec<MaxLen> = args
+    let inputs: Vec<f64> = args
       .iter()
       .skip(1)
-      .filter_map(|s| s.parse::<MaxLen>().ok())
+      .filter_map(|s| s.parse::<f64>().ok())
       .collect();
     return inputs;
   } else {
     let handle = io::stdin();
-    let inputs: Vec<MaxLen> = handle.lock().lines().filter_map(|buff| {
+    let inputs: Vec<f64> = handle
+      .lock()
+      .lines()
+      .filter_map(|buff| {
       match buff {
         Ok(line) => {
-          let line_inputs: Vec<MaxLen> = line
-            .split(|s: char| !s.is_ascii_digit())
-            .filter_map(|s| s.parse::<MaxLen>().ok())
+          let mut raw_inputs: Vec<String> = Vec::new();
+          let mut chars = line.chars();
+          let mut current_num: String = String::new();
+          while let Some(current_char) = chars.next() {
+            match current_char {
+              '-' => {
+                current_num.push(current_char);
+              },
+              '.' => {
+                current_num.push(current_char);
+              },
+              '0' ..= '9' => {
+                current_num.push(current_char);
+              },
+              _ => {
+                raw_inputs.push(current_num.clone());
+                current_num = String::new();
+              }
+            }
+          }
+          if current_num.len() > 0 {
+            raw_inputs.push(current_num.clone());
+          }
+
+          let line_inputs: Vec<f64> = raw_inputs
+            .iter()
+            .filter_map(|s| s.parse::<f64>().ok())
             .collect();
           return Some(line_inputs);
         },
@@ -29,20 +55,14 @@ pub fn parse(args: &[String]) -> Vec<MaxLen> {
   }
 }
 
-pub fn build(inputs: Vec<MaxLen>) -> Vec<Vec<u8>> {
-  let max = match inputs.iter().max() {
-    Some(m) => m.clone(),
-    None => 0
-  };
-  let min = match inputs.iter().min() {
-    Some(m) => m.clone(),
-    None => 0
-  };
-  let difference: MaxLen = max - min;
-  let levels: MaxLen = 8;
+pub fn build(inputs: Vec<f64>) -> Vec<Vec<u8>> {
+  let max = inputs.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+  let min = inputs.iter().fold(f64::INFINITY, |a, &b| a.min(b));
+  let difference: f64 = max - min;
+  let levels: f64 = 8.0;
   let bytes = b"\xE2\x96\x81";
   let result: Vec<Vec<u8>> = inputs.iter().map(|input| {
-    let height = ((*input as f32 - min as f32) / difference as f32 * levels as f32) as f32;
+    let height = (*input - min) / difference * (levels - 1.0);
     let rounded = height.round() as u8;
     return vec![bytes[0], bytes[1], bytes[2] + rounded];
   }).collect();
