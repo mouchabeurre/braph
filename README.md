@@ -11,7 +11,7 @@ To install, run `make` and `sudo make install` (`DESTDIR` defaults to `/usr/loca
 
 ## Usage
 
-`braph` outputs an unicode bar graph based off the number list it recieves from **parameters** or **standard input** (parameters precede stdin).
+`braph` outputs a unicode *bar graph* based off the number list it recieves from **parameters** or **standard input** (parameters precede stdin).
 The range of numbers is mapped to fit in 8 unicode bars: `▁▂▃▄▅▆▇█`.
 Numbers can be floats.
 
